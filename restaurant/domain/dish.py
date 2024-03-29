@@ -2,6 +2,7 @@ import dataclasses
 
 @dataclasses.dataclass
 class Dish:
+    id: int
     name: str
     description: str
     price: float
