@@ -15,9 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from rest.views import dish_list
+from rest.views import dish_list, dish_get, dish_post, dish_put, dish_delete
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('dishes/', dish_list),
+    path('dishes/<int:pk>', dish_get),
+    path('dishes/create/', dish_post),
+    path('dishes/update/', dish_put),
+    path('dishes/<int:pk>/delete/', dish_delete),
 ]
