@@ -1,4 +1,5 @@
 from repository.memrepo import MemRepo
+from repository.mongorepo import MongoRepo
 from use_cases.dish_list import dish_list_use_case
 from use_cases.dish_get import dish_get_use_case
 from use_cases.dish_post import dish_post_use_case
@@ -8,6 +9,13 @@ from django.http import HttpResponse, HttpResponseBadRequest
 import json
 from serializers.dish import DishJsonEncoder
 
+mongo_configuration = {
+    "MONGODB_HOSTNAME": 'db',
+    "MONGODB_PORT": 27017,
+    "MONGODB_USER": 'root',
+    "MONGODB_PASSWORD": 'mongodb',
+    "APPLICATION_DB": 'restaurant',
+}
 
 dishes = [
     {
@@ -38,7 +46,7 @@ dishes = [
 
 def dish_list(request):
     if request.method == 'GET':
-        repo = MemRepo(dishes) 
+        repo = MongoRepo(mongo_configuration)
         result = dish_list_use_case(repo)
         
         serialized_result = json.dumps(result, cls=DishJsonEncoder)
@@ -47,7 +55,7 @@ def dish_list(request):
 def dish_get(request, pk):
     if request.method == 'GET':
         dish_id = pk
-        repo = MemRepo(dishes) 
+        repo = MongoRepo(mongo_configuration)
         dish = dish_get_use_case(repo, dish_id)
         
         if dish:
@@ -75,7 +83,7 @@ def dish_post(request):
             "price": price
         }
 
-        repo = MemRepo(dishes) 
+        repo = MongoRepo(mongo_configuration)
         created_dish = dish_post_use_case(repo, new_dish_data)
         
         if created_dish:
@@ -101,7 +109,7 @@ def dish_put(request):
             "price": price
         }
 
-        repo = MemRepo(dishes) 
+        repo = MongoRepo(mongo_configuration)
         updated_dishes = dish_put_use_case(repo, updated_dish_data)
         
         if updated_dishes:
@@ -110,7 +118,7 @@ def dish_put(request):
 
 def dish_delete(request, pk):
     if request.method == 'DELETE':
-        repo = MemRepo(dishes) 
+        repo = MongoRepo(mongo_configuration)
         dishes_after_delete = dish_delete_use_case(repo, pk)
         
         if dishes_after_delete:
