@@ -56,7 +56,7 @@ dishes = [
 
 def dish_view(request):
     if request.method == 'GET':
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         result = dish_list_use_case(repo)
         
         
@@ -81,7 +81,7 @@ def dish_view(request):
             "price": price
         }
 
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         
         try:
             created_dish = dish_post_use_case(repo, new_dish_data)
@@ -116,7 +116,7 @@ def dish_view(request):
             "price": price
         }
 
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         updated_dishes = dish_put_use_case(repo, updated_dish_data)
         print(updated_dishes)
         
@@ -129,7 +129,7 @@ def dish_view(request):
 def dish_pk_view(request, pk):
     if request.method == 'GET':
         dish_id = pk
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         dish = dish_get_use_case(repo, dish_id)
         
         if dish:
@@ -148,7 +148,7 @@ def dish_pk_view(request, pk):
         if dish.get('description') is not None: updated_dish_data['description'] = dish.get('description')
         if dish.get('price') is not None: updated_dish_data['price'] = dish.get('price')
 
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         updated_dishes = dish_patch_use_case(repo, updated_dish_data, dish_id)
         
         if updated_dishes:
@@ -158,7 +158,7 @@ def dish_pk_view(request, pk):
             return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
 
     if request.method == 'DELETE':
-        repo = PostgresRepo(postgres_configuration)
+        repo = MongoRepo(mongo_configuration)
         dishes_after_delete = dish_delete_use_case(repo, pk)
         
         if dishes_after_delete:
