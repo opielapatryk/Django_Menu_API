@@ -64,7 +64,29 @@ SELECT id, name, description, price FROM inserted_dish;
         results = self.execute_query(query)
         return self._create_dish_object(results)
 
+    def patch(self, updated_dish,dish_id):
+        price = updated_dish.get('price')
+        if price == None:
+            price = 'Null'
 
+        query = """WITH updated_dish AS (
+            UPDATE dishes 
+            SET name = COALESCE('{name}', name),
+                description = COALESCE('{description}', description),
+                price = COALESCE({price}, price)
+            WHERE id = {id}
+            RETURNING id, name, description, price
+        )
+        SELECT id, name, description, price FROM updated_dish;
+        """.format(
+            id=dish_id,
+            name=updated_dish.get('name'),
+            description=updated_dish.get('description'),
+            price=price
+        )
+        
+        results = self.execute_query(query)
+        return self._create_dish_object(results)
 
     
     def delete(self, dish_id):
