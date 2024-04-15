@@ -5,6 +5,7 @@ from use_cases.dish_list import dish_list_use_case
 from use_cases.dish_get import dish_get_use_case
 from use_cases.dish_post import dish_post_use_case
 from use_cases.dish_put import dish_put_use_case
+from use_cases.dish_patch import dish_patch_use_case
 from use_cases.dish_delete import dish_delete_use_case
 from django.http import HttpResponse, HttpResponseBadRequest
 import json
@@ -53,27 +54,14 @@ dishes = [
     },
 ]
 
-def dish_list(request):
+def dish_view(request):
     if request.method == 'GET':
-        repo = PostgresRepo(postgres_configuration)
+        repo = MemRepo(dishes)
         result = dish_list_use_case(repo)
         
         serialized_result = json.dumps(result, cls=DishJsonEncoder)
         return HttpResponse(serialized_result)
-
-def dish_get(request, pk):
-    if request.method == 'GET':
-        dish_id = pk
-        repo = PostgresRepo(postgres_configuration)
-        dish = dish_get_use_case(repo, dish_id)
-        
-        if dish:
-            serialized_dish = json.dumps(dish, cls=DishJsonEncoder)
-            return HttpResponse(serialized_dish, content_type='application/json')
-        else:
-            return HttpResponse(status=404)
     
-def dish_post(request):
     if request.method == 'POST':
         dish = json.loads(request.body)
 
@@ -92,14 +80,15 @@ def dish_post(request):
             "price": price
         }
 
-        repo = PostgresRepo(postgres_configuration)
+        repo = MemRepo(dishes)
         created_dish = dish_post_use_case(repo, new_dish_data)
         
         if created_dish:
             serialized_dish = json.dumps(created_dish, cls=DishJsonEncoder)
             return HttpResponse(serialized_dish, content_type='application/json', status=201)
+        else:
+            return HttpResponse(json.dumps({"message": "Dish already exists"}),content_type='application/json',status=404)
 
-def dish_put(request):
     if request.method == 'PUT':
         dish = json.loads(request.body)
 
@@ -118,18 +107,53 @@ def dish_put(request):
             "price": price
         }
 
-        repo = PostgresRepo(postgres_configuration)
+        repo = MemRepo(dishes)
         updated_dishes = dish_put_use_case(repo, updated_dish_data)
+        print(updated_dishes)
         
         if updated_dishes:
             serialized_dishes = json.dumps(updated_dishes, cls=DishJsonEncoder)
             return HttpResponse(serialized_dishes, content_type='application/json')
+        else:
+            return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
 
-def dish_delete(request, pk):
+def dish_pk_view(request, pk):
+    if request.method == 'GET':
+        dish_id = pk
+        repo = MemRepo(dishes)
+        dish = dish_get_use_case(repo, dish_id)
+        
+        if dish:
+            serialized_dish = json.dumps(dish, cls=DishJsonEncoder)
+            return HttpResponse(serialized_dish, content_type='application/json')
+        else:
+            return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
+        
+    if request.method == 'PATCH':
+        dish = json.loads(request.body)
+        dish_id = pk
+
+        updated_dish_data = {}
+
+        if dish.get('name') is not None: updated_dish_data['name'] = dish.get('name')
+        if dish.get('description') is not None: updated_dish_data['description'] = dish.get('description')
+        if dish.get('price') is not None: updated_dish_data['price'] = dish.get('price')
+
+        repo = MemRepo(dishes)
+        updated_dishes = dish_patch_use_case(repo, updated_dish_data, dish_id)
+        
+        if updated_dishes:
+            serialized_dishes = json.dumps(updated_dishes, cls=DishJsonEncoder)
+            return HttpResponse(serialized_dishes, content_type='application/json')
+        else:
+            return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
+
     if request.method == 'DELETE':
-        repo = PostgresRepo(postgres_configuration)
+        repo = MemRepo(dishes)
         dishes_after_delete = dish_delete_use_case(repo, pk)
         
         if dishes_after_delete:
             serialized_dishes = json.dumps(dishes_after_delete, cls=DishJsonEncoder)
             return HttpResponse(serialized_dishes, content_type='application/json')
+        else:
+            return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)

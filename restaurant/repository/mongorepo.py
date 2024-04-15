@@ -48,6 +48,17 @@ class MongoRepo:
             return {'message': 'Dish updated successfully', 'dishes': self.list()}
         else:
             return {'error': 'Dish not found or no changes were made'}
+
+    def patch(self, updated_fields,dish_id):
+        if dish_id <= len(list(self.db.dishes.find())):
+            update_query = {"$set": updated_fields}
+
+            self.db.dishes.update_one(
+                {"id": dish_id},
+                update_query
+            )
+
+            return self.list()
         
     def delete(self,dish_id):
         self.db.dishes.delete_one({"id": dish_id})
