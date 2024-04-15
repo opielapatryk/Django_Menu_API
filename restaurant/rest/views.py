@@ -56,8 +56,9 @@ dishes = [
 
 def dish_view(request):
     if request.method == 'GET':
-        repo = MemRepo(dishes)
+        repo = PostgresRepo(postgres_configuration)
         result = dish_list_use_case(repo)
+        
         
         serialized_result = json.dumps(result, cls=DishJsonEncoder)
         return HttpResponse(serialized_result)
@@ -71,7 +72,7 @@ def dish_view(request):
         price = dish.get('price')
 
         if not name or not description or not price or not id:
-            return HttpResponseBadRequest("Missing required fields")
+            return HttpResponseBadRequest(json.dumps({"message":"Missing required fields"}))
         
         new_dish_data = {
             "id": id,
@@ -80,9 +81,17 @@ def dish_view(request):
             "price": price
         }
 
-        repo = MemRepo(dishes)
-        created_dish = dish_post_use_case(repo, new_dish_data)
+        repo = PostgresRepo(postgres_configuration)
         
+        try:
+            created_dish = dish_post_use_case(repo, new_dish_data)
+        except Exception as e:
+            error_message = str(e)
+            if 'duplicate key value violates unique constraint "dishes_pkey"' in error_message:
+                return HttpResponse(json.dumps({"message": "Dish with this ID already exists"}), content_type='application/json', status=409)
+            else:
+                return HttpResponseBadRequest(json.dumps({"message": "Integrity error occurred"}))
+
         if created_dish:
             serialized_dish = json.dumps(created_dish, cls=DishJsonEncoder)
             return HttpResponse(serialized_dish, content_type='application/json', status=201)
@@ -98,7 +107,7 @@ def dish_view(request):
         price = dish.get('price')
 
         if not name or not description or not price or not id:
-            return HttpResponseBadRequest("Missing required fields")
+            return HttpResponseBadRequest(json.dumps({"message":"Missing required fields"}))
         
         updated_dish_data = {
             "id": id,
@@ -107,7 +116,7 @@ def dish_view(request):
             "price": price
         }
 
-        repo = MemRepo(dishes)
+        repo = PostgresRepo(postgres_configuration)
         updated_dishes = dish_put_use_case(repo, updated_dish_data)
         print(updated_dishes)
         
@@ -120,7 +129,7 @@ def dish_view(request):
 def dish_pk_view(request, pk):
     if request.method == 'GET':
         dish_id = pk
-        repo = MemRepo(dishes)
+        repo = PostgresRepo(postgres_configuration)
         dish = dish_get_use_case(repo, dish_id)
         
         if dish:
@@ -139,7 +148,7 @@ def dish_pk_view(request, pk):
         if dish.get('description') is not None: updated_dish_data['description'] = dish.get('description')
         if dish.get('price') is not None: updated_dish_data['price'] = dish.get('price')
 
-        repo = MemRepo(dishes)
+        repo = PostgresRepo(postgres_configuration)
         updated_dishes = dish_patch_use_case(repo, updated_dish_data, dish_id)
         
         if updated_dishes:
@@ -149,7 +158,7 @@ def dish_pk_view(request, pk):
             return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
 
     if request.method == 'DELETE':
-        repo = MemRepo(dishes)
+        repo = PostgresRepo(postgres_configuration)
         dishes_after_delete = dish_delete_use_case(repo, pk)
         
         if dishes_after_delete:

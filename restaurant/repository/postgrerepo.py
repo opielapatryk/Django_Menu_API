@@ -42,14 +42,15 @@ class PostgresRepo:
     
     def post(self, dish):
         query = """WITH inserted_dish AS (
-    INSERT INTO dishes(id, name, description, price) 
-    VALUES ({}, '{}', '{}', {})
-    RETURNING id, name, description, price
-)
-SELECT id, name, description, price FROM inserted_dish;
-""".format(dish['id'], dish['name'], dish['description'], dish['price'])
+            INSERT INTO dishes(id, name, description, price) 
+            VALUES ({}, '{}', '{}', {})
+            RETURNING id, name, description, price
+        )
+        SELECT id, name, description, price FROM inserted_dish;
+        """.format(dish['id'], dish['name'], dish['description'], dish['price'])
         results = self.execute_query(query)
-        return self._create_dish_object(results)
+        if results:
+            return self._create_dish_object(results)
     
     def put(self, updated_dish):
         query = """WITH updated_dish AS (
@@ -90,14 +91,17 @@ SELECT id, name, description, price FROM inserted_dish;
 
     
     def delete(self, dish_id):
-        query = """WITH deleted_dish AS (
-            DELETE FROM dishes 
-            WHERE id = {}
-            RETURNING id, name, description, price
-        )
-        SELECT * FROM dishes;
-        """.format(dish_id)
-        
-        results = self.execute_query(query)
-        return self._create_dish_object(results)
-    
+        check_query = "SELECT id FROM dishes WHERE id = {}".format(dish_id)
+        check_result = self.execute_query(check_query)
+
+        if check_result:
+            query = """WITH deleted_dish AS (
+                DELETE FROM dishes 
+                WHERE id = {}
+                RETURNING id, name, description, price
+            )
+            SELECT * FROM dishes WHERE id NOT IN (SELECT id FROM deleted_dish);
+            """.format(dish_id)
+            
+            results = self.execute_query(query)
+            return self._create_dish_object(results)
