@@ -15,9 +15,10 @@ Including another URLconf
 """
 
 from django.urls import path
-from rest.views import dish_view, dish_pk_view
+from rest.views import dish_view, dish_pk_view, base_view
 
 urlpatterns = [
+    path('',base_view),
     path('api/v1/dishes/', dish_view), # list, post, put
     path('api/v1/dishes/<int:pk>', dish_pk_view), # get, patch, delete
 ]

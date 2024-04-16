@@ -53,7 +53,9 @@ dishes = [
     "price": 1.99
     },
 ]
-
+def base_view(request):
+    return HttpResponse(json.dumps({"dishes":"http://localhost:8000/api/v1/dishes/"}))
+    
 def dish_view(request):
     if request.method == 'GET':
         repo = MongoRepo(mongo_configuration)
