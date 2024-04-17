@@ -10,6 +10,7 @@ from use_cases.dish_delete import dish_delete_use_case
 from django.http import HttpResponse, HttpResponseBadRequest
 import json
 from serializers.dish import DishJsonEncoder
+from rest_framework.decorators import api_view
 
 mongo_configuration = {
     "MONGODB_HOSTNAME": 'db',
@@ -53,9 +54,8 @@ dishes = [
     "price": 1.99
     },
 ]
-def base_view(request):
-    return HttpResponse(json.dumps({"dishes":"http://localhost:8000/api/v1/dishes/"}))
     
+@api_view(['GET', 'POST', 'PUT'])
 def dish_view(request):
     if request.method == 'GET':
         repo = MongoRepo(mongo_configuration)
@@ -88,7 +88,7 @@ def dish_view(request):
         paginated_dishes = sorted_dishes[start_index:end_index]
 
         serialized_result = json.dumps(paginated_dishes, cls=DishJsonEncoder)
-        return HttpResponse(serialized_result)
+        return HttpResponse(serialized_result,content_type='application/json')
     
     if request.method == 'POST':
         dish = json.loads(request.body)
@@ -153,6 +153,7 @@ def dish_view(request):
         else:
             return HttpResponse(json.dumps({"message": "Dish not found"}),content_type='application/json',status=404)
 
+@api_view(['GET', 'PATCH', 'DELETE'])
 def dish_pk_view(request, pk):
     if request.method == 'GET':
         dish_id = pk
